@@ -15,15 +15,15 @@ public class ControladorEncuesta : MonoBehaviour
     private List<Pregunta> preguntasAleatorias;
     //[SerializeField] private ToggleGroup grupoOpciones;
     //[SerializeField] private Toggle[] togglesOpciones;
-    private bool eventosToggleHabilitados = false; 
+    private bool eventosToggleHabilitados = false;
 
-
-
+    // Temporizador variables
+    public float tiempoRestante = 30f;  // Tiempo inicial del temporizador en segundos (30 segundos)
+    private bool preguntaFinalizada = false;  // Flag para saber si la pregunta ha sido finalizada (cuando se pasa a la siguiente pregunta)
 
     // Start is called before the first frame update
     void Start()
     {
-
         eventosToggleHabilitados = false; // Explícitamente lo ponemos en false al inicio
         CargarPreguntasDesdeJSON();
         AleatorizarPreguntas();
@@ -42,6 +42,62 @@ public class ControladorEncuesta : MonoBehaviour
         eventosToggleHabilitados = true;
         Debug.Log("Eventos de Toggle habilitados correctamente");
     }
+
+    // Método para manejar el temporizador
+    void Update()
+    {
+        // Solo actualizar el temporizador si la pregunta no ha sido finalizada
+        if (!preguntaFinalizada)
+        {
+            if (tiempoRestante <= 0)
+            {
+                // Cuando el contador de tiempo llega a 0, mostramos la misma pregunta por 5 segundos
+                StartCoroutine(MostrarMismaPreguntaPor5Segundos());
+            }
+            else
+            {
+                // Reducir el contador de tiempo
+                tiempoRestante -= Time.deltaTime;
+            }
+        }
+    }
+
+    // Corutina para mostrar la misma pregunta por 5 segundos
+    IEnumerator MostrarMismaPreguntaPor5Segundos()
+    {
+        // Mostrar la misma pregunta
+        textoPreguntaUI.text = preguntaActual.textoPregunta;
+        DesactivarInteractividadOpciones();
+
+        // Desactivar el temporizador por 5 segundos
+        yield return new WaitForSeconds(5f);
+
+        // Pasar a la siguiente pregunta
+        siguientePregunta();
+    }
+
+    // Método para cambiar a la siguiente pregunta
+    void siguientePregunta()
+    {
+        preguntaFinalizada = true;
+        preguntaActualIndex++; // Incrementamos el índice para la siguiente pregunta
+        if (preguntaActualIndex < preguntasAleatorias.Count)
+        {
+            MostrarPreguntaActual();  // Mostrar la siguiente pregunta
+            ActivarInteractividadOpciones();
+            tiempoRestante = 5f;  // Reiniciar el temporizador para la nueva pregunta
+            preguntaFinalizada = false;  // Permitir que el temporizador funcione de nuevo
+        }
+        else
+        {
+            Debug.Log("Encuesta Finalizada");
+            textoPreguntaUI.text = "¡Encuesta Finalizada!";
+            grupoOpcionesUI.enabled = false;
+        }
+    }
+
+    // Aquí tienes el resto de tu código tal como está, con las funcionalidades existentes de cargar preguntas, verificar respuestas, etc...
+    // Como has indicado que ya tienes todo el sistema de preguntas y opciones, solo necesitarías integrar la parte del temporizado
 
     [System.Serializable]
     public class Pregunta
@@ -114,6 +170,14 @@ public class ControladorEncuesta : MonoBehaviour
         }
     }
 
+    void DesactivarInteractividadOpciones()
+    {
+        foreach (Toggle toggle in opcionesToggleUI)
+        {
+            toggle.interactable = false; // Desactiva la interactividad de cada Toggle de opción
+        }
+    }
+
     // Método para aleatorizar el orden de las opciones de respuesta y asegurar que la correcta esté entre ellas
     List<string> AleatorizarOpciones(List<string> opciones, int indiceCorrecto)
     {
@@ -181,6 +245,8 @@ public class ControladorEncuesta : MonoBehaviour
             grupoOpcionesUI.enabled = false;
             botonSiguientePreguntaUI.interactable = false;
         }
+
+        tiempoRestante = 5f; // Reinicia el temporizador al mostrar la nueva pregunta
     }
 
 
@@ -313,7 +379,7 @@ public class ControladorEncuesta : MonoBehaviour
 
     }
 
-    
+
 
     [Header("Referencias UI")]
     public TextMeshProUGUI textoPreguntaUI;

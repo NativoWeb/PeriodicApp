@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class Timer : MonoBehaviour
 {
     public Text TextTimer;  // Referencia al componente Text de la UI
-    public float segundos = 60f;
+    public float segundos = 30f;
 
     void Start()
     {
