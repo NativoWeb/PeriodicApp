@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "38575048160",
+    "project_id": "periodicapp-fa0e6",
+    "storage_bucket": "periodicapp-fa0e6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:38575048160:android:d71562db38e54295469785",
+        "android_client_info": {
+          "package_name": "com.DefaultCompany.ProyectoNumero2Tabla"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMqpSe-qaGesjQBXtJ6x8qFQyPAWcfIx8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
