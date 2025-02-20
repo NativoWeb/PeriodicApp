@@ -15,13 +15,15 @@ public class ControladorEncuesta : MonoBehaviour
     private List<Pregunta> preguntasAleatorias;
     //[SerializeField] private ToggleGroup grupoOpciones;
     //[SerializeField] private Toggle[] togglesOpciones;
-    private bool eventosToggleHabilitados = false;
+    private bool eventosToggleHabilitados = false; 
+
 
 
 
     // Start is called before the first frame update
     void Start()
     {
+
         eventosToggleHabilitados = false; // Explícitamente lo ponemos en false al inicio
         CargarPreguntasDesdeJSON();
         AleatorizarPreguntas();
@@ -35,8 +37,6 @@ public class ControladorEncuesta : MonoBehaviour
         }
 
         MostrarPreguntaActual();
-        botonSiguientePreguntaUI.interactable = false;
-        OcultarFeedbackRespuestas();
 
         // Ahora sí habilitamos los eventos
         eventosToggleHabilitados = true;
@@ -104,22 +104,6 @@ public class ControladorEncuesta : MonoBehaviour
         }
     }
 
-    // Método para ocultar todos los iconos de feedback (checks y equis)
-    void OcultarFeedbackRespuestas()
-    {
-        // Recorre todos los arrays de imagenes de feedback (check y equis)
-        for (int i = 0; i < imagenesCheckRespuestaUI.Length; i++)
-        {
-            if (imagenesCheckRespuestaUI[i] != null)
-            {
-                imagenesCheckRespuestaUI[i].gameObject.SetActive(false); // Desactiva la imagen del check
-            }
-            if (imagenesEquisRespuestaUI[i] != null)
-            {
-                imagenesEquisRespuestaUI[i].gameObject.SetActive(false); // Desactiva la imagen de la equis
-            }
-        }
-    }
 
     // Método para reactivar la interactividad de las opciones (Toggles) para la siguiente pregunta
     void ActivarInteractividadOpciones()
@@ -156,7 +140,6 @@ public class ControladorEncuesta : MonoBehaviour
 
     void MostrarPreguntaActual()
     {
-        OcultarFeedbackRespuestas();
 
         // Validar que hay preguntas disponibles
         if (preguntasAleatorias == null || preguntasAleatorias.Count == 0)
@@ -232,31 +215,31 @@ public class ControladorEncuesta : MonoBehaviour
     //}
 
     // Método para mostrar feedback visual de la respuesta (check o equis)
-    void MostrarFeedbackRespuesta(bool esCorrecta, int indiceOpcion)
-    {
+    //void MostrarFeedbackRespuesta(bool esCorrecta, int indiceOpcion)
+    //{
 
-        if (indiceOpcion < 0 || indiceOpcion >= imagenesCheckRespuestaUI.Length)
-        {
-            Debug.LogError("Índice fuera de rango: " + indiceOpcion);
-            return;
-        }
+    //    if (indiceOpcion < 0 || indiceOpcion >= imagenesCheckRespuestaUI.Length)
+    //    {
+    //        Debug.LogError("Índice fuera de rango: " + indiceOpcion);
+    //        return;
+    //    }
 
-        if (esCorrecta)
-        {
-            // Mostrar icono de CHECK en la opción seleccionada como CORRECTA
-            imagenesCheckRespuestaUI[indiceOpcion].gameObject.SetActive(true); // Activar imagen de check para la opción correcta
-                                                                               // Puedes añadir aquí feedback adicional, como cambiar el color del Toggle a verde, etc.
-        }
-        else
-        {
-            // Mostrar icono de EQUIS en la opción seleccionada como INCORRECTA
-            imagenesEquisRespuestaUI[indiceOpcion].gameObject.SetActive(true); // Activar imagen de equis para la opción incorrecta
-                                                                               // Puedes añadir aquí feedback adicional, como cambiar el color del Toggle a rojo, etc.
+    //    if (esCorrecta)
+    //    {
+    //        // Mostrar icono de CHECK en la opción seleccionada como CORRECTA
+    //        imagenesCheckRespuestaUI[indiceOpcion].gameObject.SetActive(true); // Activar imagen de check para la opción correcta
+    //                                                                           // Puedes añadir aquí feedback adicional, como cambiar el color del Toggle a verde, etc.
+    //    }
+    //    else
+    //    {
+    //        // Mostrar icono de EQUIS en la opción seleccionada como INCORRECTA
+    //        imagenesEquisRespuestaUI[indiceOpcion].gameObject.SetActive(true); // Activar imagen de equis para la opción incorrecta
+    //                                                                           // Puedes añadir aquí feedback adicional, como cambiar el color del Toggle a rojo, etc.
 
-            // Opcional: Mostrar también la respuesta CORRECTA (puedes decidir si quieres mostrar la correcta aunque falle)
-            imagenesCheckRespuestaUI[preguntaActual.indiceRespuestaCorrecta].gameObject.SetActive(true); // Activar imagen de check en la respuesta correcta (para indicar cuál era)
-        }
-    }
+    //        // Opcional: Mostrar también la respuesta CORRECTA (puedes decidir si quieres mostrar la correcta aunque falle)
+    //        imagenesCheckRespuestaUI[preguntaActual.indiceRespuestaCorrecta].gameObject.SetActive(true); // Activar imagen de check en la respuesta correcta (para indicar cuál era)
+    //    }
+    //}
 
     private void ConfigurarToggleListeners()
     {
@@ -308,19 +291,18 @@ public class ControladorEncuesta : MonoBehaviour
         //Debug.Log($"Verificando respuesta. Índice seleccionado: {indiceOpcionSeleccionada}, Índice correcto: {preguntaActual.indiceRespuestaCorrecta}");
         // Desactivar la interactividad de las opciones y el botón "Siguiente Pregunta" una vez que se responde
         //DesactivarInteractividadOpciones();
-        botonSiguientePreguntaUI.interactable = true;
 
         if (indiceOpcionSeleccionada == preguntaActual.indiceRespuestaCorrecta)
         {
             // ¡Respuesta CORRECTA!
             Debug.Log("¡Respuesta Correcta!");
-            MostrarFeedbackRespuesta(true, indiceOpcionSeleccionada); // Mostrar feedback de respuesta correcta
+            //MostrarFeedbackRespuesta(true, indiceOpcionSeleccionada); // Mostrar feedback de respuesta correcta
         }
         else
         {
             // ¡Respuesta INCORRECTA!
             Debug.Log("Respuesta Incorrecta");
-            MostrarFeedbackRespuesta(false, indiceOpcionSeleccionada); // Mostrar feedback de respuesta incorrecta
+            //MostrarFeedbackRespuesta(false, indiceOpcionSeleccionada); // Mostrar feedback de respuesta incorrecta
         }
 
         // Preparar para la siguiente pregunta (puedes decidir cuándo avanzar a la siguiente pregunta, por ejemplo, con un botón)
@@ -331,10 +313,7 @@ public class ControladorEncuesta : MonoBehaviour
 
     }
 
-    public void siguienteEscena(string nombre)
-    {
-        SceneManager.LoadScene(nombre);
-    }
+    
 
     [Header("Referencias UI")]
     public TextMeshProUGUI textoPreguntaUI;
