@@ -17,7 +17,9 @@ public class ControladorEncuesta : MonoBehaviour
     //[SerializeField] private Toggle[] togglesOpciones;
     private bool eventosToggleHabilitados = false;
 
-
+    // Temporizador variables
+    public float tiempoRestante = 30f;  // Tiempo inicial del temporizador en segundos (30 segundos)
+    private bool preguntaFinalizada = false;  // Flag para saber si la pregunta ha sido finalizada (cuando se pasa a la siguiente pregunta)
 
     // Start is called before the first frame update
     void Start()
@@ -35,13 +37,67 @@ public class ControladorEncuesta : MonoBehaviour
         }
 
         MostrarPreguntaActual();
-        botonSiguientePreguntaUI.interactable = false;
-        OcultarFeedbackRespuestas();
 
         // Ahora sí habilitamos los eventos
         eventosToggleHabilitados = true;
         Debug.Log("Eventos de Toggle habilitados correctamente");
     }
+
+    // Método para manejar el temporizador
+    void Update()
+    {
+        // Solo actualizar el temporizador si la pregunta no ha sido finalizada
+        if (!preguntaFinalizada)
+        {
+            if (tiempoRestante <= 0)
+            {
+                // Cuando el contador de tiempo llega a 0, mostramos la misma pregunta por 5 segundos
+                StartCoroutine(MostrarMismaPreguntaPor5Segundos());
+            }
+            else
+            {
+                // Reducir el contador de tiempo
+                tiempoRestante -= Time.deltaTime;
+            }
+        }
+    }
+
+    // Corutina para mostrar la misma pregunta por 5 segundos
+    IEnumerator MostrarMismaPreguntaPor5Segundos()
+    {
+        // Mostrar la misma pregunta
+        textoPreguntaUI.text = preguntaActual.textoPregunta;
+        DesactivarInteractividadOpciones();
+
+        // Desactivar el temporizador por 5 segundos
+        yield return new WaitForSeconds(5f);
+
+        // Pasar a la siguiente pregunta
+        siguientePregunta();
+    }
+
+    // Método para cambiar a la siguiente pregunta
+    void siguientePregunta()
+    {
+        preguntaFinalizada = true;
+        preguntaActualIndex++; // Incrementamos el índice para la siguiente pregunta
+        if (preguntaActualIndex < preguntasAleatorias.Count)
+        {
+            MostrarPreguntaActual();  // Mostrar la siguiente pregunta
+            ActivarInteractividadOpciones();
+            tiempoRestante = 5f;  // Reiniciar el temporizador para la nueva pregunta
+            preguntaFinalizada = false;  // Permitir que el temporizador funcione de nuevo
+        }
+        else
+        {
+            Debug.Log("Encuesta Finalizada");
+            textoPreguntaUI.text = "¡Encuesta Finalizada!";
+            grupoOpcionesUI.enabled = false;
+        }
+    }
+
+    // Aquí tienes el resto de tu código tal como está, con las funcionalidades existentes de cargar preguntas, verificar respuestas, etc...
+    // Como has indicado que ya tienes todo el sistema de preguntas y opciones, solo necesitarías integrar la parte del temporizado
 
     [System.Serializable]
     public class Pregunta
@@ -104,22 +160,6 @@ public class ControladorEncuesta : MonoBehaviour
         }
     }
 
-    // Método para ocultar todos los iconos de feedback (checks y equis)
-    void OcultarFeedbackRespuestas()
-    {
-        // Recorre todos los arrays de imagenes de feedback (check y equis)
-        for (int i = 0; i < imagenesCheckRespuestaUI.Length; i++)
-        {
-            if (imagenesCheckRespuestaUI[i] != null)
-            {
-                imagenesCheckRespuestaUI[i].gameObject.SetActive(false); // Desactiva la imagen del check
-            }
-            if (imagenesEquisRespuestaUI[i] != null)
-            {
-                imagenesEquisRespuestaUI[i].gameObject.SetActive(false); // Desactiva la imagen de la equis
-            }
-        }
-    }
 
     // Método para reactivar la interactividad de las opciones (Toggles) para la siguiente pregunta
     void ActivarInteractividadOpciones()
@@ -127,6 +167,14 @@ public class ControladorEncuesta : MonoBehaviour
         foreach (Toggle toggle in opcionesToggleUI)
         {
             toggle.interactable = true; // Reactiva la interactividad de cada Toggle de opción
+        }
+    }
+
+    void DesactivarInteractividadOpciones()
+    {
+        foreach (Toggle toggle in opcionesToggleUI)
+        {
+            toggle.interactable = false; // Desactiva la interactividad de cada Toggle de opción
         }
     }
 
@@ -156,7 +204,6 @@ public class ControladorEncuesta : MonoBehaviour
 
     void MostrarPreguntaActual()
     {
-        OcultarFeedbackRespuestas();
 
         // Validar que hay preguntas disponibles
         if (preguntasAleatorias == null || preguntasAleatorias.Count == 0)
@@ -198,6 +245,8 @@ public class ControladorEncuesta : MonoBehaviour
             grupoOpcionesUI.enabled = false;
             botonSiguientePreguntaUI.interactable = false;
         }
+
+        tiempoRestante = 5f; // Reinicia el temporizador al mostrar la nueva pregunta
     }
 
 
@@ -232,31 +281,31 @@ public class ControladorEncuesta : MonoBehaviour
     //}
 
     // Método para mostrar feedback visual de la respuesta (check o equis)
-    void MostrarFeedbackRespuesta(bool esCorrecta, int indiceOpcion)
-    {
+    //void MostrarFeedbackRespuesta(bool esCorrecta, int indiceOpcion)
+    //{
 
-        if (indiceOpcion < 0 || indiceOpcion >= imagenesCheckRespuestaUI.Length)
-        {
-            Debug.LogError("Índice fuera de rango: " + indiceOpcion);
-            return;
-        }
+    //    if (indiceOpcion < 0 || indiceOpcion >= imagenesCheckRespuestaUI.Length)
+    //    {
+    //        Debug.LogError("Índice fuera de rango: " + indiceOpcion);
+    //        return;
+    //    }
 
-        if (esCorrecta)
-        {
-            // Mostrar icono de CHECK en la opción seleccionada como CORRECTA
-            imagenesCheckRespuestaUI[indiceOpcion].gameObject.SetActive(true); // Activar imagen de check para la opción correcta
-                                                                               // Puedes añadir aquí feedback adicional, como cambiar el color del Toggle a verde, etc.
-        }
-        else
-        {
-            // Mostrar icono de EQUIS en la opción seleccionada como INCORRECTA
-            imagenesEquisRespuestaUI[indiceOpcion].gameObject.SetActive(true); // Activar imagen de equis para la opción incorrecta
-                                                                               // Puedes añadir aquí feedback adicional, como cambiar el color del Toggle a rojo, etc.
+    //    if (esCorrecta)
+    //    {
+    //        // Mostrar icono de CHECK en la opción seleccionada como CORRECTA
+    //        imagenesCheckRespuestaUI[indiceOpcion].gameObject.SetActive(true); // Activar imagen de check para la opción correcta
+    //                                                                           // Puedes añadir aquí feedback adicional, como cambiar el color del Toggle a verde, etc.
+    //    }
+    //    else
+    //    {
+    //        // Mostrar icono de EQUIS en la opción seleccionada como INCORRECTA
+    //        imagenesEquisRespuestaUI[indiceOpcion].gameObject.SetActive(true); // Activar imagen de equis para la opción incorrecta
+    //                                                                           // Puedes añadir aquí feedback adicional, como cambiar el color del Toggle a rojo, etc.
 
-            // Opcional: Mostrar también la respuesta CORRECTA (puedes decidir si quieres mostrar la correcta aunque falle)
-            imagenesCheckRespuestaUI[preguntaActual.indiceRespuestaCorrecta].gameObject.SetActive(true); // Activar imagen de check en la respuesta correcta (para indicar cuál era)
-        }
-    }
+    //        // Opcional: Mostrar también la respuesta CORRECTA (puedes decidir si quieres mostrar la correcta aunque falle)
+    //        imagenesCheckRespuestaUI[preguntaActual.indiceRespuestaCorrecta].gameObject.SetActive(true); // Activar imagen de check en la respuesta correcta (para indicar cuál era)
+    //    }
+    //}
 
     private void ConfigurarToggleListeners()
     {
@@ -308,19 +357,18 @@ public class ControladorEncuesta : MonoBehaviour
         //Debug.Log($"Verificando respuesta. Índice seleccionado: {indiceOpcionSeleccionada}, Índice correcto: {preguntaActual.indiceRespuestaCorrecta}");
         // Desactivar la interactividad de las opciones y el botón "Siguiente Pregunta" una vez que se responde
         //DesactivarInteractividadOpciones();
-        botonSiguientePreguntaUI.interactable = true;
 
         if (indiceOpcionSeleccionada == preguntaActual.indiceRespuestaCorrecta)
         {
             // ¡Respuesta CORRECTA!
             Debug.Log("¡Respuesta Correcta!");
-            MostrarFeedbackRespuesta(true, indiceOpcionSeleccionada); // Mostrar feedback de respuesta correcta
+            //MostrarFeedbackRespuesta(true, indiceOpcionSeleccionada); // Mostrar feedback de respuesta correcta
         }
         else
         {
             // ¡Respuesta INCORRECTA!
             Debug.Log("Respuesta Incorrecta");
-            MostrarFeedbackRespuesta(false, indiceOpcionSeleccionada); // Mostrar feedback de respuesta incorrecta
+            //MostrarFeedbackRespuesta(false, indiceOpcionSeleccionada); // Mostrar feedback de respuesta incorrecta
         }
 
         // Preparar para la siguiente pregunta (puedes decidir cuándo avanzar a la siguiente pregunta, por ejemplo, con un botón)
@@ -331,10 +379,7 @@ public class ControladorEncuesta : MonoBehaviour
 
     }
 
-    public void siguienteEscena(string nombre)
-    {
-        SceneManager.LoadScene(nombre);
-    }
+
 
     [Header("Referencias UI")]
     public TextMeshProUGUI textoPreguntaUI;
