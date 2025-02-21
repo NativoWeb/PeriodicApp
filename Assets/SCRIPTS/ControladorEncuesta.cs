@@ -24,40 +24,47 @@ public class ControladorEncuesta : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        eventosToggleHabilitados = false; // Explícitamente lo ponemos en false al inicio
         CargarPreguntasDesdeJSON();
         AleatorizarPreguntas();
+        MostrarPreguntaActual();
+        desmarcarToggle();
         ConfigurarToggleListeners();
 
-        // Asegurarnos que los toggles estén limpios
         foreach (Toggle toggle in opcionesToggleUI)
         {
-            toggle.interactable = true;
-            toggle.isOn = false;
+            toggle.onValueChanged.RemoveAllListeners();
         }
 
-        MostrarPreguntaActual();
+        for (int i = 0; i < opcionesToggleUI.Length; i++)
+        {
+            int index = i; // ¡Captura el índice correctamente!
+            opcionesToggleUI[index].onValueChanged.AddListener((bool isOn) =>
+            {
+                if (isOn && eventosToggleHabilitados)
+                {
+                    Debug.Log($"Toggle {index} activado");
+                }
+            });
+        }
 
-        // Ahora sí habilitamos los eventos
-        eventosToggleHabilitados = true;
-        Debug.Log("Eventos de Toggle habilitados correctamente");
     }
 
     // Método para manejar el temporizador
     void Update()
     {
+
         // Solo actualizar el temporizador si la pregunta no ha sido finalizada
         if (!preguntaFinalizada)
         {
-            if (tiempoRestante <= 0)
+
+            if (tiempoRestante > 0)
             {
-                // Cuando el contador de tiempo llega a 0, mostramos la misma pregunta por 5 segundos
-                StartCoroutine(MostrarMismaPreguntaPor5Segundos());
+                tiempoRestante -= Time.deltaTime; // Reduce el tiempo
             }
-            else
+            else if (!preguntaFinalizada) // Verifica que la pregunta aún no se ha respondido
             {
-                // Reducir el contador de tiempo
-                tiempoRestante -= Time.deltaTime;
+                preguntaFinalizada = true; // Evita que el código se ejecute varias veces en un solo frame
+                StartCoroutine(MostrarMismaPreguntaPor5Segundos());
             }
         }
     }
@@ -65,15 +72,27 @@ public class ControladorEncuesta : MonoBehaviour
     // Corutina para mostrar la misma pregunta por 5 segundos
     IEnumerator MostrarMismaPreguntaPor5Segundos()
     {
-        // Mostrar la misma pregunta
+        // Mostrar la misma pregunta y desactivar toggles
         textoPreguntaUI.text = preguntaActual.textoPregunta;
         DesactivarInteractividadOpciones();
 
         // Desactivar el temporizador por 5 segundos
         yield return new WaitForSeconds(5f);
 
-        // Pasar a la siguiente pregunta
+        // Pasar a la siguiente pregunta  activar toggles
+        ActivarInteractividadOpciones();
+
         siguientePregunta();
+    }
+
+    void desmarcarToggle()
+    {
+        // Asegurarnos que los toggles estén limpios
+        foreach (Toggle toggle in opcionesToggleUI)
+        {
+            toggle.interactable = true;
+            toggle.isOn = false;
+        }
     }
 
     // Método para cambiar a la siguiente pregunta
@@ -85,7 +104,7 @@ public class ControladorEncuesta : MonoBehaviour
         {
             MostrarPreguntaActual();  // Mostrar la siguiente pregunta
             ActivarInteractividadOpciones();
-            tiempoRestante = 5f;  // Reiniciar el temporizador para la nueva pregunta
+            tiempoRestante = 30f;  // Reiniciar el temporizador para la nueva pregunta
             preguntaFinalizada = false;  // Permitir que el temporizador funcione de nuevo
         }
         else
@@ -160,24 +179,6 @@ public class ControladorEncuesta : MonoBehaviour
         }
     }
 
-
-    // Método para reactivar la interactividad de las opciones (Toggles) para la siguiente pregunta
-    void ActivarInteractividadOpciones()
-    {
-        foreach (Toggle toggle in opcionesToggleUI)
-        {
-            toggle.interactable = true; // Reactiva la interactividad de cada Toggle de opción
-        }
-    }
-
-    void DesactivarInteractividadOpciones()
-    {
-        foreach (Toggle toggle in opcionesToggleUI)
-        {
-            toggle.interactable = false; // Desactiva la interactividad de cada Toggle de opción
-        }
-    }
-
     // Método para aleatorizar el orden de las opciones de respuesta y asegurar que la correcta esté entre ellas
     List<string> AleatorizarOpciones(List<string> opciones, int indiceCorrecto)
     {
@@ -204,7 +205,6 @@ public class ControladorEncuesta : MonoBehaviour
 
     void MostrarPreguntaActual()
     {
-
         // Validar que hay preguntas disponibles
         if (preguntasAleatorias == null || preguntasAleatorias.Count == 0)
         {
@@ -229,11 +229,19 @@ public class ControladorEncuesta : MonoBehaviour
             // Asignar opciones a los Toggles
             for (int i = 0; i < opcionesToggleUI.Length; i++)
             {
-                TextMeshProUGUI textoToggle = opcionesToggleUI[i].GetComponentInChildren<TextMeshProUGUI>();
-                if (textoToggle != null)
+                if (i < opcionesAleatorias.Count)  // Si hay una opción disponible
                 {
-                    textoToggle.text = opcionesAleatorias[i];
+                    opcionesToggleUI[i].gameObject.SetActive(true); // Asegurar que el Toggle esté activo
+                    TextMeshProUGUI textoToggle = opcionesToggleUI[i].GetComponentInChildren<TextMeshProUGUI>();
+                    if (textoToggle != null)
+                    {
+                        textoToggle.text = opcionesAleatorias[i];
+                    }
                     opcionesToggleUI[i].isOn = false;
+                }
+                else
+                {
+                    opcionesToggleUI[i].gameObject.SetActive(false); // Desactiva Toggles adicionales
                 }
             }
             grupoOpcionesUI.SetAllTogglesOff();
@@ -243,10 +251,9 @@ public class ControladorEncuesta : MonoBehaviour
             Debug.Log("Encuesta Finalizada");
             textoPreguntaUI.text = "¡Encuesta Finalizada!";
             grupoOpcionesUI.enabled = false;
-            botonSiguientePreguntaUI.interactable = false;
         }
 
-        tiempoRestante = 5f; // Reinicia el temporizador al mostrar la nueva pregunta
+        tiempoRestante = 30f; // Reinicia el temporizador al mostrar la nueva pregunta
     }
 
 
@@ -270,15 +277,6 @@ public class ControladorEncuesta : MonoBehaviour
             Debug.LogWarning("No hay preguntas para aleatorizar o la lista de preguntas es nula.");
         }
     }
-
-    // Método para desactivar la interactividad de las opciones (Toggles) después de responder
-    //void DesactivarInteractividadOpciones()
-    //{
-    //    foreach (Toggle toggle in opcionesToggleUI)
-    //    {
-    //        toggle.interactable = false; // Desactiva la interactividad de cada Toggle de opción
-    //    }
-    //}
 
     // Método para mostrar feedback visual de la respuesta (check o equis)
     //void MostrarFeedbackRespuesta(bool esCorrecta, int indiceOpcion)
@@ -352,11 +350,11 @@ public class ControladorEncuesta : MonoBehaviour
             return;
         }
 
-        //Debug.Log("¡VERIFICAR RESPUESTA LLAMADA!  Opción Seleccionada: " + indiceOpcionSeleccionada); // <-- ¡NUEVA LÍNEA Debug.Log!
+        Debug.Log("¡VERIFICAR RESPUESTA LLAMADA!  Opción Seleccionada: " + indiceOpcionSeleccionada); // <-- ¡NUEVA LÍNEA Debug.Log!
 
-        //Debug.Log($"Verificando respuesta. Índice seleccionado: {indiceOpcionSeleccionada}, Índice correcto: {preguntaActual.indiceRespuestaCorrecta}");
+        Debug.Log($"Verificando respuesta. Índice seleccionado: {indiceOpcionSeleccionada}, Índice correcto: {preguntaActual.indiceRespuestaCorrecta}");
         // Desactivar la interactividad de las opciones y el botón "Siguiente Pregunta" una vez que se responde
-        //DesactivarInteractividadOpciones();
+        DesactivarInteractividadOpciones();
 
         if (indiceOpcionSeleccionada == preguntaActual.indiceRespuestaCorrecta)
         {
@@ -378,6 +376,23 @@ public class ControladorEncuesta : MonoBehaviour
         Debug.Log($"Índice seleccionado: {indiceOpcionSeleccionada} | Índice correcto: {preguntaActual.indiceRespuestaCorrecta}");
 
     }
+    
+    // Método para reactivar la interactividad de las opciones (Toggles) para la siguiente pregunta
+    void ActivarInteractividadOpciones()
+    {
+        foreach (Toggle toggle in opcionesToggleUI)
+        {
+            toggle.interactable = true; // Reactiva la interactividad de cada Toggle de opción
+        }
+    }
+
+    void DesactivarInteractividadOpciones()
+    {
+        foreach (Toggle toggle in opcionesToggleUI)
+        {
+            toggle.interactable = false; // Desactiva la interactividad de cada Toggle de opción
+        }
+    }
 
 
 
@@ -385,7 +400,6 @@ public class ControladorEncuesta : MonoBehaviour
     public TextMeshProUGUI textoPreguntaUI;
     public ToggleGroup grupoOpcionesUI;
     public Toggle[] opcionesToggleUI;
-    public Button botonSiguientePreguntaUI;
 
     [Header("Referencias Feedback Respuesta")]
     public Image[] imagenesCheckRespuestaUI;
